@@ -22,7 +22,7 @@
         <p>
           <a class="btn btn-primary btn-sm" role="button" href="{% url 'post_detail' post.pk %}">Ver post</a>
 
-          <a href="{% url 'post_like' post.pk %}" class="likeButton">
+          <a href="{% url 'post_like_ajax' post.pk %}" class="likeButton">
 
             <span>{{ post.likes.all.count }}</span>
             {% if request.user in post.likes.all %}
@@ -32,6 +32,7 @@
             {% endif %}
           </a>
         </p>
+        
         <p>
           {{ post.comments.all.count }} <i class="bi bi-chat-dots"></i>
         </p>
@@ -41,5 +42,6 @@
       {{ post.caption }}
     </p>
   </footer>
+  </div>
 </article>
 

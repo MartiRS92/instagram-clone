@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.shortcuts import HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 
-from .forms import PostCreateForm
+from .forms import PostCreateForm, CommentCreateForm
 from django.http import JsonResponse
 
 # Create your views here.
@@ -26,10 +26,20 @@ class PostCreateView(CreateView):
         return super(PostCreateView, self).form_valid(form)
 
 @method_decorator(login_required, name='dispatch')
-class PostDetailView(DetailView):
+class PostDetailView(DetailView, CreateView):
     template_name = "posts/post_detail.html"
     model = Post
     context_object_name = 'post'
+    form_class = CommentCreateForm
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.post = self.get_object()
+        return super(PostDetailView, self).form_valid(form)
+
+    def get_success_url(self):
+        messages.add_message(self.request, messages.SUCCESS, "Comentario creado correctamente.")
+        return reverse('post_detail', args=[self.get_object().pk]) 
 
 @login_required
 def like_post(request, pk):
@@ -43,6 +53,7 @@ def like_post(request, pk):
 
     return HttpResponseRedirect(reverse('post_detail', args=[pk]))
 
+@login_required
 def like_post_ajax(request, pk):
     post = Post.objects.get(pk=pk)
     if request.user in post.likes.all():
@@ -50,7 +61,8 @@ def like_post_ajax(request, pk):
         return JsonResponse(
             {
                 'message': 'Ya no me gusta esta publicación',
-                'liked': False
+                'liked': False,
+                'nLikes': post.likes.all().count(),
             }
 
         )
@@ -59,7 +71,9 @@ def like_post_ajax(request, pk):
         return JsonResponse(
             {
                 'message': 'Te gusta esta publicación',
-                'liked': True
+                'liked': True,
+                'nLikes': post.likes.all().count(),
+
             }
 
         )
